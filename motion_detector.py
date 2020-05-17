@@ -1,12 +1,17 @@
 import cv2
 import numpy as np
+import winsound
+import time
 
 cap = cv2.VideoCapture(0)
 cap.set(3,1080)
 cap.set(4,720)
 
 thresh = 25
-max_diff=100
+max_diff = 100
+sirenOn = False
+trigger = False
+startTime = 0
 if cap.isOpened():
     while True:
         ret1, frame1 = cap.read()
@@ -31,14 +36,27 @@ if cap.isOpened():
                 # 여기서부턴 motion detect탐지 
                 whiteDotCnt = np.count_nonzero(diff_bin)
                 if(whiteDotCnt>max_diff):
+                    startTime = time.time()
+                    sirenOn = True
                     nzero = np.nonzero(diff_bin)
                     cv2.rectangle(draw, (min(nzero[1]), min(nzero[0])),
                     (max(nzero[1]), max(nzero[0])), (0,255,0), 3)
                     cv2.putText(draw, "Motion Detected!!", (min(nzero[1]), min(nzero[0]))
-                    ,cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3)    
+                    ,cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3)   
+                else:
+                    sirenOn = False
+                
+                
+                
+                if(sirenOn == True and trigger == False):
+                    winsound.PlaySound(r'./siren.wav', winsound.SND_ASYNC)
+                    trigger = True
+                if(time.time()>startTime+5):
+                    winsound.PlaySound(None, winsound.SND_PURGE)
+                    trigger = False
                 
         
-        cv2.imshow('test',draw)        
+        cv2.imshow('CCTV',draw)        
         if(cv2.waitKey(1)==27):
             break
 else:
