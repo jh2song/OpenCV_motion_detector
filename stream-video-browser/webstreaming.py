@@ -21,7 +21,7 @@ outputFrame = None
 lock = threading.Lock()
 
 # Flask object 생성
-app = Flask("Web Cam CCTV")
+app = Flask("__name__")
 
 # initialize the video stream and allow the camera sensor to
 # warmup
