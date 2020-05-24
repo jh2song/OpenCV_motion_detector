@@ -1,7 +1,7 @@
-# USAGE
-# python webstreaming.py --ip 0.0.0.0 --port 8000
+# 사용법
+# python webstreaming.py
 
-# import the necessary packages
+# 필요한 라이브러리를 import
 from pyimagesearch.motion_detection import SingleMotionDetector
 from imutils.video import VideoStream
 from flask import Response
@@ -20,7 +20,7 @@ import cv2
 outputFrame = None
 lock = threading.Lock()
 
-# initialize a flask object
+# Flask object 생성
 app = Flask("Web Cam CCTV")
 
 # initialize the video stream and allow the camera sensor to
@@ -31,9 +31,10 @@ time.sleep(2.0)
 
 @app.route("/")
 def index():
-	# return the rendered template
+	# template 반환
 	return render_template("index.html")
 
+# 모션 감지 함수
 def detect_motion(frameCount):
 	# grab global references to the video stream, output frame, and
 	# lock variables
@@ -105,37 +106,23 @@ def generate():
 				continue
 
 		# yield the output frame in the byte format
-		yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + 
-			bytearray(encodedImage) + b'\r\n')
+		yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')
 
 @app.route("/video_feed")
 def video_feed():
 	# return the response generated along with the specific media
 	# type (mime type)
-	return Response(generate(),
-		mimetype = "multipart/x-mixed-replace; boundary=frame")
+	return Response(generate(), mimetype = "multipart/x-mixed-replace; boundary=frame")
 
 # check to see if this is the main thread of execution
 if __name__ == '__main__':
-	# construct the argument parser and parse command line arguments
-	ap = argparse.ArgumentParser()
-	ap.add_argument("-i", "--ip", type=str, required=True,
-		help="ip address of the device")
-	ap.add_argument("-o", "--port", type=int, required=True,
-		help="ephemeral port number of the server (1024 to 65535)")
-	ap.add_argument("-f", "--frame-count", type=int, default=32,
-		help="# of frames used to construct the background model")
-	args = vars(ap.parse_args())
-
 	# start a thread that will perform motion detection
-	t = threading.Thread(target=detect_motion, args=(
-		args["frame_count"],))
+	t = threading.Thread(target=detect_motion, args=(128,))
 	t.daemon = True
 	t.start()
 
 	# start the flask app
-	app.run(host=args["ip"], port=args["port"], debug=True,
-		threaded=True, use_reloader=False)
+	app.run(host="0.0.0.0", port="8000", debug=True, threaded=True, use_reloader=False)
 
 # release the video stream pointer
 vs.stop()

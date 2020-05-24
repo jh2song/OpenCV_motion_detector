@@ -1,9 +1,26 @@
 <html>
   <head>
     <title>Web Cam CCTV</title>
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background-color: #000;
+        color: #fff;
+      }
+      .title {
+        font-size: 64;
+      }
+      .cctv {
+        width: 50%;
+      }
+    </style>
   </head>
   <body>
-    <h1>Web Cam CCTV</h1>
-    <img src="{{ url_for('video_feed') }}" />
+    <h1 class="title">CCTV</h1>
+    <img class="cctv" src="{{ url_for('video_feed') }}" />
   </body>
 </html>
