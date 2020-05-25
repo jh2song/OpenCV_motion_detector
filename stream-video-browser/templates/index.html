@@ -1,0 +1,56 @@
+<html>
+  <head>
+    <title>Web Cam CCTV</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      .banner {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+        background: #bbb;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .banner .bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.25;
+      }
+      .banner .content {
+        position: relative;
+        max-width: 750px;
+        text-align: center;
+      }
+      .banner .content h1 {
+        color: #fff;
+        font-size: 60px;
+      }
+      .banner .content .cctv {
+        width: 750px;
+        object-fit: cover;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="banner">
+      <img
+        class="bg"
+        src="{{ url_for('static', filename='image/bg.jpg') }}"
+        alt="background"
+      />
+      <div class="content">
+        <h1 class="title">CCTV</h1>
+        <img class="cctv" src="{{ url_for('video_feed') }}" alt="cctv" />
+      </div>
+    </div>
+  </body>
+</html>
