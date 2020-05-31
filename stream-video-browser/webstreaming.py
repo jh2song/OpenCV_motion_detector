@@ -2,7 +2,7 @@
 # python webstreaming.py
 
 # 필요한 라이브러리를 import
-from pyimagesearch.motion_detection import SingleMotionDetector
+from singlemotiondetector import SingleMotionDetector
 from imutils.video import VideoStream
 from flask import Response
 from flask import Flask
