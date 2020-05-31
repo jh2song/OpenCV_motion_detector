@@ -1,5 +1,4 @@
 # 사용법
-# pip install
 # python webstreaming.py
 
 # 필요한 라이브러리를 import
@@ -9,10 +8,8 @@ from flask import Response
 from flask import Flask
 from flask import render_template
 import threading
-import argparse
 import datetime
 import imutils
-import time
 import cv2
 
 # initialize the output frame and a lock used to ensure thread-safe
@@ -27,8 +24,6 @@ app = Flask("__name__")
 # VideoStream을 초기화시키고 카메라 센서가 예열되도록 한다.
 # vs = VideoStream(usePiCamera=1).start()
 vs = VideoStream(src=0).start()
-# 일시 정지 함수
-time.sleep(2.0)
 
 
 @app.route("/")
@@ -42,17 +37,16 @@ def detect_motion(frameCount):
     # 출력 프레임과 lock, video stream 변수에 대한 전역변수로 참조
     global vs, outputFrame, lock
 
-    # initialize the motion detector and the total number of frames
-    # read thus far
+    # SingleMotionDetector 객체를 초기화하고, 총 프레임 수를 0으로 초기화한다.
     md = SingleMotionDetector(accumWeight=0.1)
     total = 0
 
-    # loop over frames from the video stream
+    # Video Stream으로부터 오는 frame을 반복해서 생성한다.
     while True:
-        # read the next frame from the video stream, resize it,
-        # convert the frame to grayscale, and blur it
+        # Video Stream에서 다음 프레임을 읽고, 크기를 width 400으로 조정한다.
+        # 그 후 frame을 grayscale로 변환 한 후 흐리게 처리한다.
         frame = vs.read()
-        frame = imutils.resize(frame, width=400)
+        frame = imutils.resize(frame, width=750)
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (7, 7), 0)
 
@@ -72,13 +66,12 @@ def detect_motion(frameCount):
         # number to construct a reasonable background model, then
         # continue to process the frame
         if total > frameCount:
-            # detect motion in the image
+            # SingleMotionDetector 클래스의 detect 함수로 이미지에서 움직임을 감지.
             motion = md.detect(gray)
 
-            # cehck to see if motion was found in the frame
+            # frame에서 움직임이 감지되었는지 확인한다. return 같이 None이 아닐경우 감지.
             if motion is not None:
-                # unpack the tuple and draw the box surrounding the
-                # "motion area" on the output frame
+                # motion tuple을 풀고, 출력 frame에 motion 영역을 둘러싸는 사각형을 그린다.
                 (thresh, (minX, minY, maxX, maxY)) = motion
                 cv2.rectangle(frame, (minX, minY), (maxX, maxY), (0, 0, 255), 2)
 
@@ -87,8 +80,7 @@ def detect_motion(frameCount):
         md.update(gray)
         total += 1
 
-        # acquire the lock, set the output frame, and release the
-        # lock
+        # thread lock을 얻고, 출력 프레임을 설정 후 lock을 해제한다.
         with lock:
             outputFrame = frame.copy()
 
@@ -97,23 +89,23 @@ def generate():
     # 출력 프레임과 lock 변수에 대한 전역변수로 참조
     global outputFrame, lock
 
-    # loop over frames from the output stream
+    # outputFrame으로부터 오는 frame을 반복한다.
     while True:
-        # wait until the lock is acquired
+        # thread lock을 얻는다.
         with lock:
-            # check if the output frame is available, otherwise skip
-            # the iteration of the loop
+            # outputFrame이 None인지 확인하고, None이면 loop문의 반복을 건너뛴다.
             if outputFrame is None:
                 continue
 
-            # encode the frame in JPEG format
+            # frame을 JPEG 형식으로 인코딩한다.
             (flag, encodedImage) = cv2.imencode(".jpg", outputFrame)
 
-            # ensure the frame was successfully encoded
+            # frame이 성공적으로 인코딩되었는지 확인한다.
+            # flag의 여부로 확인.
             if not flag:
                 continue
 
-        # yield the output frame in the byte format
+        # outputFrame을 byte 형식으로 반환한다.
         yield (
             b"--frame\r\n"
             b"Content-Type: image/jpeg\r\n\r\n" + bytearray(encodedImage) + b"\r\n"
@@ -122,21 +114,21 @@ def generate():
 
 @app.route("/video_feed")
 def video_feed():
-    # return the response generated along with the specific media
-    # type (mime type)
+    # multipart/x-mixed-replace MIME 형식을 사용하여 하나의 jpg를 표시하고 다음에 다른 jpg가
+    # 그것을 대치하고 계속해서 여러 개의 jpg 파일을 이와 같은 방법으로 대치하여 이것으로 간단한
+    # 애니메이션을 웹에서 구현한다.
+    # https://qaos.com/sections.php?op=viewarticle&artid=272
     return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
 
-# main thread인지 확인한다.
-if __name__ == "__main__":
-    # detect_motion을 수행할 thread를 시작한다.
-    # daemon thread를 true로 주어 main thread가 종료되면 즉시 종료되게 한다.
-    t = threading.Thread(target=detect_motion, args=(128,))
-    t.daemon = True
-    t.start()
+# detect_motion을 수행할 thread를 시작한다.
+# daemon thread를 true로 주어 main thread가 종료되면 즉시 종료되게 한다.
+t = threading.Thread(target=detect_motion, args=(128,))
+t.daemon = True
+t.start()
 
-    # localhost 8000번 포트에 Flask Server 시작
-    app.run(host="0.0.0.0", port="8000", debug=True, threaded=True, use_reloader=False)
+# localhost 8000번 포트에 Flask Server 시작
+app.run(host="0.0.0.0", port="8000", debug=True, threaded=True, use_reloader=False)
 
-# video stream을 해제한다.
+# VideoStream을 해제한다.
 vs.stop()

@@ -1,4 +1,4 @@
-# import the necessary packages
+# 필요한 package import.
 import numpy as np
 import imutils
 import cv2
@@ -57,4 +57,3 @@ class SingleMotionDetector:
         # otherwise, return a tuple of the thresholded image along
         # with bounding box
         return (thresh, (minX, minY, maxX, maxY))
-
