@@ -27,17 +27,17 @@ app = Flask("__name__")
 # warmup
 #vs = VideoStream(usePiCamera=1).start()
 vs = VideoStream(src=0).start()
+# 일시 정지 함수
 time.sleep(2.0)
 
 @app.route("/")
 def index():
-	# template 반환
+	# index template 반환
 	return render_template("index.html")
 
 # 모션 감지 함수
 def detect_motion(frameCount):
-	# grab global references to the video stream, output frame, and
-	# lock variables
+	# 출력 프레임과 lock, video stream 변수에 대한 전역변수로 참조
 	global vs, outputFrame, lock
 
 	# initialize the motion detector and the total number of frames
@@ -54,11 +54,9 @@ def detect_motion(frameCount):
 		gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 		gray = cv2.GaussianBlur(gray, (7, 7), 0)
 
-		# grab the current timestamp and draw it on the frame
+		# 현재 시간을 구한 후 frame에 그린다.
 		timestamp = datetime.datetime.now()
-		cv2.putText(frame, timestamp.strftime(
-			"%A %d %B %Y %I:%M:%S%p"), (10, frame.shape[0] - 10),
-			cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
+		cv2.putText(frame, timestamp.strftime("%A %d %B %Y %I:%M:%S%p"), (10, frame.shape[0] - 10),cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
 
 		# if the total number of frames has reached a sufficient
 		# number to construct a reasonable background model, then
@@ -86,7 +84,7 @@ def detect_motion(frameCount):
 			outputFrame = frame.copy()
 		
 def generate():
-	# grab global references to the output frame and lock variables
+	# 출력 프레임과 lock 변수에 대한 전역변수로 참조
 	global outputFrame, lock
 
 	# loop over frames from the output stream
@@ -121,7 +119,7 @@ if __name__ == '__main__':
 	t.daemon = True
 	t.start()
 
-	# start the flask app
+	# Flask Server 시작
 	app.run(host="0.0.0.0", port="8000", debug=True, threaded=True, use_reloader=False)
 
 # release the video stream pointer
